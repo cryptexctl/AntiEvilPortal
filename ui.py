@@ -9,7 +9,7 @@ class ScannerUI:
 
         self.root = ctk.CTk()
         self.root.title("AntiEvilPortal")
-        self.root.geometry("500x400")
+        self.root.geometry("600x500")
 
         self.attacker = EvilPortalAttacker()
 
@@ -36,18 +36,40 @@ class ScannerUI:
         self.progress.pack(pady=20)
         self.progress.set(0)
 
+        self.log_box = ctk.CTkTextbox(self.root, width=500, height=200)
+        self.log_box.pack(pady=10)
+
     def scan_networks(self):
+        self.add_log("Сканируем сети...")
+        self.progress_var.set(0.2)
+        self.root.update()
+
         self.network_list = self.attacker.scan()
         if self.network_list:
             self.selected_network.set(self.network_list[0])
             self.dropdown.configure(values=self.network_list)
+            self.add_log(f"Найдено сетей: {len(self.network_list)}")
         else:
             self.selected_network.set("")
+            self.add_log("Сети не найдены.")
+
+        self.progress_var.set(1)
 
     def attack_network(self):
         ssid = self.selected_network.get()
         if ssid:
+            self.add_log(f"Атакуем сеть: {ssid}")
             self.attacker.attack(ssid, self.progress_var)
+        else:
+            self.add_log("Сеть не выбрана.")
+
+    def add_log(self, message: str):
+        self.log_box.insert(tk.END, message + "\n")
+        self.log_box.see(tk.END)
+
+    def update_progress(self, value: float):
+        self.progress_var.set(value)
+        self.root.update()
 
     def run(self):
         self.root.mainloop()
