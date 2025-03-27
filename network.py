@@ -1,10 +1,9 @@
 import pywifi
-from pywifi import Profile  # ← вот это важно
 import requests
 import random
 import string
 import logging
-from typing import List, Tuple
+from typing import List, Any
 from config import *
 
 class NetworkManager:
@@ -19,12 +18,12 @@ class NetworkManager:
     def generate_random_string(self, length: int = RANDOM_STRING_LENGTH) -> str:
         return ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))
 
-    def create_profile(self, ssid: str) -> Profile:
-        profile = Profile()
+    def create_profile(self, ssid: str):
+        profile = pywifi.Profile()
         profile.ssid = ssid
         profile.auth = pywifi.const.AUTH_ALG_OPEN
         profile.akm.append(pywifi.const.AKM_TYPE_NONE)
-        profile.cipher = pywifi.const.CIPHER_TYPE_NONE
+        profile.cipher = pywifi.const.CIPHER_TYPE_NONE  # было неправильно: AKM_TYPE_NONE
         profile.key = ''
         return profile
 
@@ -32,24 +31,29 @@ class NetworkManager:
         try:
             self.iface.disconnect()
             profile = self.create_profile(ssid)
+            self.iface.remove_all_network_profiles()
             self.iface.connect(self.iface.add_network_profile(profile))
             return True
         except Exception as e:
             self.logger.error(f"Ошибка подключения к сети {ssid}: {str(e)}")
             return False
 
-    def scan_networks(self) -> List[pywifi.ScanResult]:
+    def scan_networks(self) -> List[Any]:
         try:
             self.iface.scan()
+            import time
+            time.sleep(2)  # подождать завершения сканирования
             return self.iface.scan_results()
         except Exception as e:
             self.logger.error(f"Ошибка сканирования сетей: {str(e)}")
             return []
 
-    def is_evil_portal(self, result: pywifi.ScanResult) -> bool:
-        return (result.akm == [pywifi.const.AKM_TYPE_NONE] and 
-                result.cipher == pywifi.const.CIPHER_TYPE_NONE and 
-                result.ssid.strip() != '')
+    def is_evil_portal(self, result) -> bool:
+        return (
+            result.akm == [pywifi.const.AKM_TYPE_NONE] and
+            result.cipher == pywifi.const.CIPHER_TYPE_NONE and
+            result.ssid.strip() != ''
+        )
 
     def send_request(self, url: str, method: str = 'GET', payload: dict = None) -> requests.Response:
         headers = {
@@ -59,7 +63,7 @@ class NetworkManager:
             'accept-encoding': self.generate_payload(),
             'accept-language': self.generate_payload()
         }
-        
+
         try:
             if method.upper() == 'GET':
                 return requests.get(url, params=payload, headers=headers, timeout=CONNECTION_TIMEOUT)
