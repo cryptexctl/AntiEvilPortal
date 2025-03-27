@@ -1,4 +1,5 @@
 import pywifi
+from pywifi import Profile  # ← вот это важно
 import requests
 import random
 import string
@@ -18,12 +19,12 @@ class NetworkManager:
     def generate_random_string(self, length: int = RANDOM_STRING_LENGTH) -> str:
         return ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))
 
-    def create_profile(self, ssid: str) -> pywifi.Profile:
-        profile = pywifi.Profile()
+    def create_profile(self, ssid: str) -> Profile:
+        profile = Profile()
         profile.ssid = ssid
         profile.auth = pywifi.const.AUTH_ALG_OPEN
         profile.akm.append(pywifi.const.AKM_TYPE_NONE)
-        profile.cipher = pywifi.const.AKM_TYPE_NONE
+        profile.cipher = pywifi.const.CIPHER_TYPE_NONE
         profile.key = ''
         return profile
 
@@ -47,7 +48,7 @@ class NetworkManager:
 
     def is_evil_portal(self, result: pywifi.ScanResult) -> bool:
         return (result.akm == [pywifi.const.AKM_TYPE_NONE] and 
-                result.cipher == pywifi.const.AKM_TYPE_NONE and 
+                result.cipher == pywifi.const.CIPHER_TYPE_NONE and 
                 result.ssid.strip() != '')
 
     def send_request(self, url: str, method: str = 'GET', payload: dict = None) -> requests.Response:
@@ -66,4 +67,4 @@ class NetworkManager:
                 return requests.post(url, json=payload, headers=headers, timeout=CONNECTION_TIMEOUT)
         except requests.RequestException as e:
             self.logger.error(f"Ошибка отправки запроса: {str(e)}")
-            raise 
+            raise
