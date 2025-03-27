@@ -37,7 +37,6 @@ class AntiEvilPortal:
                 for network in evil_portals:
                     self.ui.add_log(f'- {network.ssid}')
                 
-                # Запускаем атаку на каждую найденную сеть
                 for network in evil_portals:
                     self.attack_network(network.ssid)
             else:
@@ -54,13 +53,17 @@ class AntiEvilPortal:
         """Атакует Evil Portal сеть"""
         try:
             self.ui.add_log(f'\nАтакуем сеть {ssid}...')
-            url = f'http://{ssid}/'
-            
-            if self.attacker.attack(ssid, url, self.ui.progress_var):
-                 self.ui.add_log(f'Сеть {ssid} успешно атакована!')
-            else:
-                self.ui.add_log(f'Не удалось атаковать сеть {ssid}')
-                
+
+            # Попытка подключения к известным IP портала
+            for host in ["172.0.0.1", "192.168.4.1"]:
+                url = f'http://{host}/'
+                self.ui.add_log(f'Пробуем {url}...')
+                if self.attacker.attack(ssid, url, self.ui.progress_var):
+                    self.ui.add_log(f'Сеть {ssid} успешно атакована через {host}!')
+                    return
+
+            self.ui.add_log(f'Не удалось атаковать сеть {ssid}')
+
         except Exception as e:
             self.logger.error(f"Ошибка при атаке сети {ssid}: {str(e)}")
             self.ui.add_log(f'Ошибка: {str(e)}')
