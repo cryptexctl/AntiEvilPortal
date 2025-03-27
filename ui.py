@@ -72,4 +72,4 @@ class ScannerUI:
         self.root.update()
 
     def run(self):
-        self.root.mainloop()
+        self.root.mainloop()   
