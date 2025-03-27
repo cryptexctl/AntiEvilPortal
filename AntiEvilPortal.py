@@ -56,7 +56,7 @@ class AntiEvilPortal:
             self.ui.add_log(f'\nАтакуем сеть {ssid}...')
             url = f'http://{ssid}/'
             
-            if self.attacker.attack_network(ssid, url):
+            if self.attacker.attack(ssid, url):
                 self.ui.add_log(f'Сеть {ssid} успешно атакована!')
             else:
                 self.ui.add_log(f'Не удалось атаковать сеть {ssid}')
