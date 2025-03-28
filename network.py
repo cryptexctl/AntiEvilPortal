@@ -11,6 +11,7 @@ class NetworkManager:
         self.wifi = pywifi.PyWiFi()
         self.iface = self.wifi.interfaces()[0]
         self.logger = logging.getLogger(__name__)
+        self.portal_ips = ['172.0.0.1', '192.168.4.1']
 
     def generate_payload(self) -> str:
         return 'vorobushek' * (PAYLOAD_SIZE // 10)
@@ -49,6 +50,18 @@ class NetworkManager:
         return (result.akm == [pywifi.const.AKM_TYPE_NONE] and 
                 result.cipher == pywifi.const.AKM_TYPE_NONE and 
                 result.ssid.strip() != '')
+
+    def check_portal_ip(self, ssid: str) -> str:
+        for ip in self.portal_ips:
+            try:
+                url = f'http://{ip}/'
+                response = requests.get(url, timeout=CONNECTION_TIMEOUT)
+                if "<div class=form-container>" in response.text:
+                    self.logger.info(f'Найден Evil Portal на IP: {ip}')
+                    return url
+            except:
+                continue
+        return None
 
     def send_request(self, url: str, method: str = 'GET', payload: dict = None) -> requests.Response:
         headers = {
