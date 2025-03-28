@@ -13,7 +13,8 @@ class NetworkManager:
         self.iface = self.wifi.interfaces()[0]
         self.logger = logging.getLogger(__name__)
         self.portal_ips = ['172.0.0.1', '192.168.4.1']
-        self.portal_check_timeout = 10  # Увеличенный таймаут для проверки портала
+        self.portal_check_timeout = 10
+        self.portal_ports = ['80', '443']  # Добавляем порты для проверки
 
     def generate_payload(self) -> str:
         return 'vorobushek' * (PAYLOAD_SIZE // 10)
@@ -35,7 +36,7 @@ class NetworkManager:
             self.iface.disconnect()
             profile = self.create_profile(ssid)
             self.iface.connect(self.iface.add_network_profile(profile))
-            time.sleep(2)  # Даем время на подключение
+            time.sleep(2)
             return True
         except Exception as e:
             self.logger.error(f"Ошибка подключения к сети {ssid}: {str(e)}")
@@ -56,23 +57,32 @@ class NetworkManager:
 
     def check_portal_ip(self, ssid: str) -> str:
         for ip in self.portal_ips:
-            try:
-                url = f'http://{ip}/'
-                self.logger.info(f'Проверяем IP: {ip}')
-                response = requests.get(url, timeout=self.portal_check_timeout)
-                if "<div class=form-container>" in response.text:
-                    self.logger.info(f'Найден Evil Portal на IP: {ip}')
-                    return url
-                time.sleep(1)  # Небольшая пауза между проверками
-            except requests.Timeout:
-                self.logger.info(f'Таймаут при проверке IP: {ip}')
-                continue
-            except requests.ConnectionError:
-                self.logger.info(f'Ошибка подключения к IP: {ip}')
-                continue
-            except Exception as e:
-                self.logger.error(f'Ошибка при проверке IP {ip}: {str(e)}')
-                continue
+            for port in self.portal_ports:
+                try:
+                    protocol = 'https' if port == '443' else 'http'
+                    url = f'{protocol}://{ip}:{port}/'
+                    self.logger.info(f'Проверяем {protocol}://{ip}:{port}')
+                    
+                    # Для HTTPS отключаем проверку сертификата
+                    verify = False if protocol == 'https' else True
+                    response = requests.get(url, timeout=self.portal_check_timeout, verify=verify)
+                    
+                    if "<div class=form-container>" in response.text:
+                        self.logger.info(f'Найден Evil Portal на {protocol}://{ip}:{port}')
+                        return url
+                    time.sleep(1)
+                except requests.Timeout:
+                    self.logger.info(f'Таймаут при проверке {protocol}://{ip}:{port}')
+                    continue
+                except requests.ConnectionError:
+                    self.logger.info(f'Ошибка подключения к {protocol}://{ip}:{port}')
+                    continue
+                except requests.exceptions.SSLError:
+                    self.logger.info(f'Ошибка SSL при проверке {protocol}://{ip}:{port}')
+                    continue
+                except Exception as e:
+                    self.logger.error(f'Ошибка при проверке {protocol}://{ip}:{port}: {str(e)}')
+                    continue
         return None
 
     def send_request(self, url: str, method: str = 'GET', payload: dict = None) -> requests.Response:
@@ -85,10 +95,11 @@ class NetworkManager:
         }
         
         try:
+            verify = False if url.startswith('https') else True
             if method.upper() == 'GET':
-                return requests.get(url, params=payload, headers=headers, timeout=CONNECTION_TIMEOUT)
+                return requests.get(url, params=payload, headers=headers, timeout=CONNECTION_TIMEOUT, verify=verify)
             else:
-                return requests.post(url, json=payload, headers=headers, timeout=CONNECTION_TIMEOUT)
+                return requests.post(url, json=payload, headers=headers, timeout=CONNECTION_TIMEOUT, verify=verify)
         except requests.RequestException as e:
             self.logger.error(f"Ошибка отправки запроса: {str(e)}")
             raise 
