@@ -8,9 +8,12 @@ from config import *
 
 class ScannerUI:
     def __init__(self):
+        self.progress_var = tk.DoubleVar()
+        self.progress_var.set(0)
+        
         self.root = tk.Tk()
-        self.root.title("Anti Evil Portal Scanner")
-        self.root.geometry(WINDOW_SIZE)
+        self.root.title("AntiEvilPortal Scanner")
+        self.root.geometry("800x600")
         
         self.network_manager = NetworkManager()
         self.attacker = EvilPortalAttacker()
@@ -20,8 +23,6 @@ class ScannerUI:
         
         self.scanning = False
         self.current_network = None
-        self.progress_var = tk.DoubleVar()
-        self.progress_var.set(0)
 
     def setup_logging(self):
         self.logger = logging.getLogger(__name__)
