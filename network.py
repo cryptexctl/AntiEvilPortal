@@ -3,6 +3,7 @@ import requests
 import random
 import string
 import logging
+import time
 from typing import List, Tuple
 from config import *
 
@@ -12,6 +13,7 @@ class NetworkManager:
         self.iface = self.wifi.interfaces()[0]
         self.logger = logging.getLogger(__name__)
         self.portal_ips = ['172.0.0.1', '192.168.4.1']
+        self.portal_check_timeout = 10  # Увеличенный таймаут для проверки портала
 
     def generate_payload(self) -> str:
         return 'vorobushek' * (PAYLOAD_SIZE // 10)
@@ -33,6 +35,7 @@ class NetworkManager:
             self.iface.disconnect()
             profile = self.create_profile(ssid)
             self.iface.connect(self.iface.add_network_profile(profile))
+            time.sleep(2)  # Даем время на подключение
             return True
         except Exception as e:
             self.logger.error(f"Ошибка подключения к сети {ssid}: {str(e)}")
@@ -55,11 +58,20 @@ class NetworkManager:
         for ip in self.portal_ips:
             try:
                 url = f'http://{ip}/'
-                response = requests.get(url, timeout=CONNECTION_TIMEOUT)
+                self.logger.info(f'Проверяем IP: {ip}')
+                response = requests.get(url, timeout=self.portal_check_timeout)
                 if "<div class=form-container>" in response.text:
                     self.logger.info(f'Найден Evil Portal на IP: {ip}')
                     return url
-            except:
+                time.sleep(1)  # Небольшая пауза между проверками
+            except requests.Timeout:
+                self.logger.info(f'Таймаут при проверке IP: {ip}')
+                continue
+            except requests.ConnectionError:
+                self.logger.info(f'Ошибка подключения к IP: {ip}')
+                continue
+            except Exception as e:
+                self.logger.error(f'Ошибка при проверке IP {ip}: {str(e)}')
                 continue
         return None
 
