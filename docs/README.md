@@ -2,23 +2,22 @@
 
 ## Содержание
 
-1. [Общее описание](general.md)
+1. [Общее описание](overview.md)
 2. [Архитектура](architecture.md)
-3. [Модули](modules/README.md)
-   - [NetworkManager](modules/network.md)
-   - [EvilPortalAttacker](modules/attacker.md)
-   - [ScannerUI](modules/ui.md)
-4. [Конфигурация](configuration.md)
-5. [Безопасность](security.md)
-6. [Разработка](development.md)
+3. [Установка и настройка](setup.md)
+4. [Использование](usage.md)
+5. [API](api.md)
+6. [Безопасность](security.md)
+7. [Устранение неполадок](troubleshooting.md)
 
 ## Краткое описание
 
-Anti Evil Portal Scanner - это инструмент для обнаружения и защиты от Evil Portal атак на WiFi сети. Программа сканирует доступные сети, определяет потенциальные Evil Portal и применяет защитные меры.
+Anti Evil Portal Scanner - это инструмент для обнаружения и защиты от Evil Portal атак на WiFi сети. Он использует различные методы для определения уязвимых сетей и защиты от них.
 
 ## Основные компоненты
 
-- `NetworkManager` - управление WiFi подключениями
-- `EvilPortalAttacker` - реализация методов атаки
-- `ScannerUI` - пользовательский интерфейс
-- `config.py` - конфигурация приложения 
+- `network.py` - модуль для работы с WiFi сетями
+- `attacker.py` - модуль для выполнения атак
+- `ui.py` - модуль пользовательского интерфейса
+- `config.py` - конфигурационный модуль
+- `AntiEvilPortal.py` - основной файл приложения 

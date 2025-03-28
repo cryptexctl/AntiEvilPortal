@@ -37,7 +37,7 @@ class NetworkManager:
             self.logger.error(f"Ошибка подключения к сети {ssid}: {str(e)}")
             return False
 
-    def scan_networks(self) -> List[pywifi.Profile]:
+    def scan_networks(self) -> List[pywifi.ScanResult]:
         try:
             self.iface.scan()
             return self.iface.scan_results()
@@ -45,7 +45,7 @@ class NetworkManager:
             self.logger.error(f"Ошибка сканирования сетей: {str(e)}")
             return []
 
-    def is_evil_portal(self, result: pywifi.Profile) -> bool:
+    def is_evil_portal(self, result: pywifi.ScanResult) -> bool:
         return (result.akm == [pywifi.const.AKM_TYPE_NONE] and 
                 result.cipher == pywifi.const.AKM_TYPE_NONE and 
                 result.ssid.strip() != '')
@@ -66,4 +66,4 @@ class NetworkManager:
                 return requests.post(url, json=payload, headers=headers, timeout=CONNECTION_TIMEOUT)
         except requests.RequestException as e:
             self.logger.error(f"Ошибка отправки запроса: {str(e)}")
-            raise
+            raise 
