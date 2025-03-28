@@ -66,4 +66,4 @@ class NetworkManager:
                 return requests.post(url, json=payload, headers=headers, timeout=CONNECTION_TIMEOUT)
         except requests.RequestException as e:
             self.logger.error(f"Ошибка отправки запроса: {str(e)}")
-            raise 
+            raise
